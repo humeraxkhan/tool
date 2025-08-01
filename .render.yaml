@@ -3,7 +3,6 @@ services:
     name: indiamart-scraper
     env: docker
     plan: free
-    region: oregon
     branch: main
+    region: oregon
     dockerfilePath: Dockerfile
-    autoDeploy: true

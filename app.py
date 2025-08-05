@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -14,9 +13,8 @@ from selenium.webdriver.support import expected_conditions as EC
 # User configs
 GECKODRIVER_PATH = r"C:\Users\DELL\Downloads\geckodriver-v0.35.0-win32\geckodriver.exe"
 FIREFOX_BINARY_PATH = r"C:\Program Files\Mozilla Firefox\firefox.exe"
-MOBILE_NUMBER = "6261277633"  # Optional: You can remove login if not needed
+MOBILE_NUMBER = "6261277633"
 
-# Streamlit UI
 st.set_page_config(page_title="IndiaMART Scraper", layout="centered")
 st.title("📦 IndiaMART Product Scraper")
 
@@ -36,10 +34,10 @@ if st.button("🚀 Start Scraping"):
         options.binary_location = FIREFOX_BINARY_PATH
         options.add_argument("--width=1200")
         options.add_argument("--height=800")
+        options.add_argument("--headless")
         service = Service(GECKODRIVER_PATH)
         driver = webdriver.Firefox(service=service, options=options)
 
-        # Data containers
         product_names, prices, cities, addresses, companies = [], [], [], [], []
 
         try:
@@ -49,8 +47,8 @@ if st.button("🚀 Start Scraping"):
                 st.info(f"🌐 Loaded Page {page}: {url}")
                 time.sleep(5)
 
-                # Optional Login (skip if not needed)
-                if page == 1:  # Only attempt login on first page
+                # Optional login on first page
+                if page == 1:
                     try:
                         sign_in_button = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.LINK_TEXT, "Sign In"))
@@ -73,7 +71,7 @@ if st.button("🚀 Start Scraping"):
                     except Exception:
                         st.warning("⚠ Could not log in. Proceeding anyway...")
 
-                # Scroll for X seconds
+                # scrolling logic
                 st.info(f"⏳ Scrolling Page {page} for {scroll_duration} seconds...")
                 start = time.time()
                 while time.time() - start < scroll_duration:
@@ -86,7 +84,7 @@ if st.button("🚀 Start Scraping"):
                     except:
                         time.sleep(2)
 
-                # Parse and extract
+                # parse and collect data
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 cards = soup.find_all("div", class_="card")
 
@@ -103,7 +101,6 @@ if st.button("🚀 Start Scraping"):
                     addresses.append(address_p.text.strip() if address_p else "N/A")
                     companies.append(company.text.strip() if company else "N/A")
 
-            # Final DataFrame
             df = pd.DataFrame({
                 "Product Name": product_names,
                 "Price": prices,
@@ -120,6 +117,14 @@ if st.button("🚀 Start Scraping"):
                 st.download_button("📥 Download Excel", f, file_name=filename)
 
         except Exception as e:
-            st.error(f"❌ Error occurred: {e}")
+            st.error(f"❌ Error: {e}")
         finally:
             driver.quit()
+
+# fix for Railway/Render ports
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8501))
+    import streamlit.web.bootstrap
+    streamlit.web.bootstrap.run(
+        "app.py", "", [], None, port=port
+    )
